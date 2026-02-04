@@ -4,20 +4,21 @@ from transformers import AutoImageProcessor, AutoModelForImageClassification
 
 MODEL_NAME = "dima806/deepfake_vs_real_image_detection"
 
-# Load model and processor ONCE
-processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
-model = AutoModelForImageClassification.from_pretrained(MODEL_NAME)
+processor = None
+model = None
+
+
+def load_model():
+    global processor, model
+    if processor is None or model is None:
+        processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
+        model = AutoModelForImageClassification.from_pretrained(MODEL_NAME)
 
 
 def detect_deepfake(image_path: str):
-    """
-    Takes an image path and returns:
-    - prediction label (Real / Fake)
-    - confidence score (0 to 1)
-    """
+    load_model()
 
     image = Image.open(image_path).convert("RGB")
-
     inputs = processor(images=image, return_tensors="pt")
 
     with torch.no_grad():
