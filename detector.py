@@ -2,32 +2,28 @@ import torch
 from PIL import Image
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 
-MODEL_NAME = "dima806/deepfake_vs_real_image_detection"
+MODEL_NAME = "Wvolf/ViT_Deepfake_Detection"
 
-processor = None
-model = None
+processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
+model = AutoModelForImageClassification.from_pretrained(MODEL_NAME)
+model.eval()
 
+print("LABEL MAP:", model.config.id2label)
 
-def load_model():
-    global processor, model
-    if processor is None or model is None:
-        processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
-        model = AutoModelForImageClassification.from_pretrained(MODEL_NAME)
+def predict_image(image: Image.Image):
+    if image.mode != "RGB":
+        image = image.convert("RGB")
 
-
-def detect_deepfake(image_path: str):
-    load_model()
-
-    image = Image.open(image_path).convert("RGB")
     inputs = processor(images=image, return_tensors="pt")
 
     with torch.no_grad():
         outputs = model(**inputs)
+        probs = torch.softmax(outputs.logits, dim=1)
 
-    logits = outputs.logits
-    predicted_class = logits.argmax(-1).item()
+    print("ALL PROBS:", probs)
 
-    label = model.config.id2label[predicted_class]
-    confidence = torch.softmax(logits, dim=1)[0][predicted_class].item()
+    pred_id = torch.argmax(probs, dim=1).item()
+    confidence = probs[0][pred_id].item()
+    label = model.config.id2label[pred_id]
 
     return label, confidence

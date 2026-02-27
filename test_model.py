@@ -1,6 +1,7 @@
-from detector import detect_deepfake
+from detector import predict_image
+from PIL import Image
 
-label, confidence = detect_deepfake("test.jpg")
-
+image = Image.open("test.jpg")
+label, confidence = predict_image(image)
 print(f"Prediction: {label}")
-print(f"Confidence: {confidence:.2f}")
+print(f"Confidence: {confidence:.2%}")
